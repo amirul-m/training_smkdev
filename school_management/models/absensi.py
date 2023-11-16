@@ -4,6 +4,7 @@ from odoo.exceptions import UserError
 
 class SchoolAbsensi(models.Model):
     _name = 'school.absensi'
+    _rec_name = 'name'
 
     name = fields.Char(string="Pertemuan")
     day = fields.Date(string="Tanggal", required=True, default=date.today())
@@ -19,6 +20,15 @@ class SchoolAbsensi(models.Model):
 
     murid_ids = fields.Many2many('res.partner', domain="[('kelas_id', '=', kelas_id), ('is_murid', '=', True)]",
                                  string="Murid")
+    
+    @api.constrains('pelajaran_id', 'day')
+    def check_pelajaran_day(self):
+        existing_record = self.search([
+                ('pelajaran_id', '=', self.pelajaran_id.id),
+                ('kelas_id', '=', self.kelas_id.id),
+            ])
+        if existing_record:
+            raise UserError('Tidak boleh membuat absensi dengan pelajaran dan kelas yang sama')
 
     # Check apabila ada pertemuan dan pelajaran yang sama
     @api.model
