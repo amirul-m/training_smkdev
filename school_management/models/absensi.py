@@ -4,6 +4,7 @@ from odoo.exceptions import UserError
 
 class SchoolAbsensi(models.Model):
     _name = 'school.absensi'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _rec_name = 'name'
 
     name = fields.Char(string="Pertemuan")
@@ -12,8 +13,8 @@ class SchoolAbsensi(models.Model):
     date_end = fields.Datetime(string="Jam Selesai")
     state = fields.Selection([('undone', 'Belum Dimulai'), ('ongoing', 'Sedang Berlangsung'), ('done', 'Selesai')],
                              'Status',
-                             default='undone')
-    pelajaran_id = fields.Many2one(string='Pelajaran', comodel_name='school.pelajaran', required=True)
+                             default='undone', tracking=True)
+    pelajaran_id = fields.Many2one(string='Pelajaran', comodel_name='school.pelajaran', required=True, tracking=True)
     kelas_id = fields.Many2one(string='Kelas', comodel_name='school.kelas', required=True)
     guru_id = fields.Many2one(string='Guru', comodel_name='res.users', domain=[('is_guru', '=', True)], required=True,
                               default=lambda self: self.env.user)
@@ -21,30 +22,21 @@ class SchoolAbsensi(models.Model):
     murid_ids = fields.Many2many('res.partner', domain="[('kelas_id', '=', kelas_id), ('is_murid', '=', True)]",
                                  string="Murid")
     
-    @api.constrains('pelajaran_id', 'day')
+    @api.constrains('pelajaran_id', 'day', 'kelas_id')
     def check_pelajaran_day(self):
         existing_record = self.search([
+                ('day', '=', self.day),
                 ('pelajaran_id', '=', self.pelajaran_id.id),
                 ('kelas_id', '=', self.kelas_id.id),
+                ('id', '!=', self.id)
             ])
         if existing_record:
-            raise UserError('Tidak boleh membuat absensi dengan pelajaran dan kelas yang sama')
+            raise UserError('Tidak boleh membuat absensi dengan pelajaran dan kelas yang sama pada tanggal yang sama')
 
     # Check apabila ada pertemuan dan pelajaran yang sama
     @api.model
     def create(self, vals):
-        pertemuan = vals.get('name')
-        pelajaran = vals.get('pelajaran_id')
-        kelas = vals.get('kelas_id')
-        if pertemuan and pelajaran and kelas:
-            existing_record = self.search([
-                ('name', '=', pertemuan),
-                ('pelajaran_id', '=', pelajaran),
-                ('kelas_id', '=', kelas),
-            ])
-
-            if existing_record:
-                raise UserError(_("Cannot create a record with the same name and pelajaran"))
+        vals['name'] = self.env['ir.sequence'].next_by_code('school.absensi')
         return super(SchoolAbsensi, self).create(vals)
 
     # Tampilkan Murid yang ada di kelas yang dipilih

@@ -18,7 +18,7 @@
                         <div class="oe_title">
                             <label for="name"/>
                             <h1>
-                                <field name="name" required="1" placeholder="Pertemuan 1" attrs="{'readonly': [('state','in',('ongoing','done'))]}"/>
+                                <field name="name" readonly="1" force_save="1"/>
                             </h1>
                         </div>
                         <group>
@@ -45,6 +45,12 @@
                             </page>
                         </notebook>
                     </sheet>
+                    <!-- after sheet -->
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
                 </form>
             </field>
         </record>

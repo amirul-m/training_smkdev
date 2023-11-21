@@ -8,6 +8,7 @@
     'license': 'LGPL-3',
     'depends': ['base', 'contacts'],
     'data': [
+        'data/data.xml',
         'security/security_school_group_access.xml',
         'security/security.xml',
         'security/ir.model.access.csv',
